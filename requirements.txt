@@ -1,0 +1,14 @@
+langchain
+langchain-groq
+langchain-community
+langchain-text-splitters
+langgraph
+fastapi
+uvicorn
+jinja2
+unstructured
+newspaper3k
+python-dotenv
+faiss-cpu
+requests
+beautifulsoup4

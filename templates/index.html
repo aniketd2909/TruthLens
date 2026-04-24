@@ -3,162 +3,310 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VeriFeed: Fact-Checked Intelligence</title>
+    <title>TruthLens - Fake News Detector</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
-        .header { background: #1e293b; padding: 20px 40px; border-bottom: 1px solid #334155; }
+        .header { background: #1e293b; padding: 20px 40px; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 12px; }
         .header h1 { font-size: 1.8rem; color: #38bdf8; }
-        .header p { color: #94a3b8; margin-top: 4px; }
-        .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
-        .card { background: #1e293b; border-radius: 12px; padding: 24px; margin-bottom: 24px; border: 1px solid #334155; }
-        label { display: block; margin-bottom: 8px; color: #94a3b8; font-size: 0.9rem; }
-        input[type="text"] { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #e2e8f0; font-size: 1rem; outline: none; }
+        .header p { color: #94a3b8; font-size: 0.9rem; margin-top: 2px; }
+        .container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+        .search-card { background: #1e293b; border-radius: 16px; padding: 32px; border: 1px solid #334155; margin-bottom: 24px; }
+        .search-card h2 { font-size: 1.2rem; margin-bottom: 16px; color: #cbd5e1; }
+        .search-row { display: flex; gap: 12px; }
+        input[type="text"] { flex: 1; padding: 14px 18px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: #e2e8f0; font-size: 1rem; outline: none; }
         input[type="text"]:focus { border-color: #38bdf8; }
-        .sources-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-top: 8px; }
-        .source-btn { padding: 10px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #94a3b8; cursor: pointer; text-align: center; transition: all 0.2s; }
-        .source-btn.selected { background: #0c4a6e; border-color: #38bdf8; color: #38bdf8; }
-        .submit-btn { width: 100%; padding: 14px; background: #0284c7; border: none; border-radius: 8px; color: white; font-size: 1rem; cursor: pointer; margin-top: 16px; transition: background 0.2s; }
-        .submit-btn:hover { background: #0369a1; }
-        .submit-btn:disabled { background: #334155; cursor: not-allowed; }
-        .loader { text-align: center; padding: 40px; color: #38bdf8; display: none; }
-        .spinner { width: 40px; height: 40px; border: 3px solid #334155; border-top-color: #38bdf8; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
+        .verify-btn { padding: 14px 28px; background: #0284c7; border: none; border-radius: 10px; color: white; font-size: 1rem; cursor: pointer; white-space: nowrap; transition: background 0.2s; }
+        .verify-btn:hover { background: #0369a1; }
+        .verify-btn:disabled { background: #334155; cursor: not-allowed; }
+        .loader { text-align: center; padding: 60px; display: none; }
+        .spinner { width: 50px; height: 50px; border: 4px solid #334155; border-top-color: #38bdf8; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+        .loader-steps { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+        .step-badge { padding: 4px 12px; background: #1e293b; border: 1px solid #334155; border-radius: 20px; font-size: 0.8rem; color: #64748b; }
+        .step-badge.active { border-color: #38bdf8; color: #38bdf8; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
-        .stat { background: #0f172a; border-radius: 8px; padding: 16px; text-align: center; border: 1px solid #334155; }
-        .stat-number { font-size: 2rem; font-weight: bold; color: #38bdf8; }
-        .stat-label { color: #64748b; font-size: 0.85rem; margin-top: 4px; }
-        .report { background: #0f172a; border-radius: 8px; padding: 20px; white-space: pre-wrap; line-height: 1.8; border: 1px solid #334155; }
-        .article-card { background: #0f172a; border-radius: 8px; padding: 16px; margin-bottom: 12px; border: 1px solid #334155; }
-        .article-title { font-weight: bold; color: #e2e8f0; margin-bottom: 6px; }
-        .article-meta { display: flex; gap: 12px; margin-bottom: 8px; }
-        .badge { padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
-        .badge.High { background: #064e3b; color: #34d399; }
-        .badge.Medium { background: #1c1917; color: #d97706; }
-        .badge.Low { background: #1f2937; color: #9ca3af; }
-        .article-summary { color: #94a3b8; font-size: 0.9rem; line-height: 1.6; }
-        .article-url { margin-top: 8px; }
-        .article-url a { color: #38bdf8; font-size: 0.85rem; text-decoration: none; }
-        .result-section { display: none; }
-        .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
-        .tab { padding: 8px 16px; border-radius: 6px; cursor: pointer; border: 1px solid #334155; color: #94a3b8; background: transparent; }
+        .results { display: none; }
+
+        /* Verdict Banner */
+        .verdict-banner { border-radius: 16px; padding: 28px 32px; margin-bottom: 24px; display: flex; align-items: center; gap: 24px; }
+        .verdict-banner.REAL { background: linear-gradient(135deg, #064e3b, #065f46); border: 1px solid #10b981; }
+        .verdict-banner.FAKE { background: linear-gradient(135deg, #7f1d1d, #991b1b); border: 1px solid #ef4444; }
+        .verdict-banner.UNVERIFIED { background: linear-gradient(135deg, #1c1917, #292524); border: 1px solid #f59e0b; }
+        .verdict-banner.MISLEADING { background: linear-gradient(135deg, #1e1b4b, #312e81); border: 1px solid #8b5cf6; }
+        .verdict-icon { font-size: 3rem; }
+        .verdict-text h2 { font-size: 1.8rem; font-weight: bold; margin-bottom: 4px; }
+        .verdict-text.REAL h2 { color: #10b981; }
+        .verdict-text.FAKE h2 { color: #ef4444; }
+        .verdict-text.UNVERIFIED h2 { color: #f59e0b; }
+        .verdict-text.MISLEADING h2 { color: #8b5cf6; }
+        .verdict-text p { color: #cbd5e1; line-height: 1.6; }
+        .confidence-bar { margin-top: 10px; }
+        .confidence-label { font-size: 0.85rem; color: #94a3b8; margin-bottom: 4px; }
+        .bar-track { background: #0f172a; border-radius: 4px; height: 8px; width: 200px; }
+        .bar-fill { height: 8px; border-radius: 4px; background: #10b981; transition: width 1s; }
+
+        /* Stats Row */
+        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+        .stat-card { background: #1e293b; border-radius: 12px; padding: 20px; text-align: center; border: 1px solid #334155; }
+        .stat-number { font-size: 1.8rem; font-weight: bold; color: #38bdf8; }
+        .stat-label { color: #64748b; font-size: 0.8rem; margin-top: 4px; }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+        .tab { padding: 10px 18px; border-radius: 8px; cursor: pointer; border: 1px solid #334155; color: #94a3b8; background: transparent; font-size: 0.9rem; transition: all 0.2s; }
+        .tab:hover { border-color: #38bdf8; color: #38bdf8; }
         .tab.active { background: #0284c7; border-color: #0284c7; color: white; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
+
+        /* Cards */
+        .card { background: #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 12px; border: 1px solid #334155; }
+        .card-title { font-weight: bold; color: #e2e8f0; margin-bottom: 8px; font-size: 1rem; }
+        .card-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+        .badge { padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 500; }
+        .badge.tier1 { background: #064e3b; color: #34d399; }
+        .badge.tier2 { background: #1e3a5f; color: #60a5fa; }
+        .badge.tier3 { background: #2d1b0e; color: #f97316; }
+        .badge.unknown { background: #1f2937; color: #9ca3af; }
+        .badge.real { background: #064e3b; color: #34d399; }
+        .badge.fake { background: #450a0a; color: #f87171; }
+        .badge.unverified { background: #1c1917; color: #fbbf24; }
+        .badge.misleading { background: #1e1b4b; color: #a78bfa; }
+        .card-text { color: #94a3b8; font-size: 0.9rem; line-height: 1.6; }
+        .card-link a { color: #38bdf8; font-size: 0.85rem; text-decoration: none; margin-top: 8px; display: inline-block; }
+
+        /* Score bar */
+        .score-row { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+        .score-track { flex: 1; background: #0f172a; border-radius: 4px; height: 6px; }
+        .score-fill { height: 6px; border-radius: 4px; }
+        .score-num { font-size: 0.9rem; font-weight: bold; min-width: 35px; }
+
+        .report-box { background: #0f172a; border-radius: 10px; padding: 20px; white-space: pre-wrap; line-height: 1.8; border: 1px solid #334155; color: #cbd5e1; }
+        .recommendation { background: #0c4a6e; border-radius: 10px; padding: 16px 20px; margin-top: 16px; border: 1px solid #0369a1; color: #bae6fd; }
+        .recommendation strong { display: block; margin-bottom: 4px; color: #38bdf8; }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>📰 NewsBot</h1>
-        <p>Multi-Agent News Aggregator powered by LangGraph + GPT</p>
+        <div>
+            <h1>🔍 TruthLens</h1>
+            <p>AI-powered fake news detector & fact verifier</p>
+        </div>
     </div>
 
     <div class="container">
-        <div class="card">
-            <div style="margin-bottom: 16px;">
-                <label>Topic or Question</label>
-                <input type="text" id="topic" placeholder="e.g. AI breakthroughs, US elections, climate change..." />
+        <div class="search-card">
+            <h2>Enter a news headline or claim to verify</h2>
+            <div class="search-row">
+                <input type="text" id="query" placeholder="e.g. 'NASA discovers water on Mars' or 'Is climate change causing more hurricanes?'" />
+                <button class="verify-btn" onclick="verify()" id="verifyBtn">🔍 Verify</button>
             </div>
-            <div>
-                <label>Select News Sources</label>
-                <div class="sources-grid" id="sourcesGrid">
-                    {% for source in sources %}
-                    <div class="source-btn" onclick="toggleSource(this, '{{ source }}')">{{ source }}</div>
-                    {% endfor %}
-                </div>
-            </div>
-            <button class="submit-btn" onclick="runResearch()" id="submitBtn">🔍 Research News</button>
         </div>
 
         <div class="loader" id="loader">
             <div class="spinner"></div>
-            <p>Agents are working... Fetching → Deduplicating → Summarizing → Presenting</p>
+            <p style="color:#38bdf8; font-size:1.1rem;">Analyzing across trusted news sources...</p>
+            <div class="loader-steps">
+                <span class="step-badge active">📥 Fetching</span>
+                <span class="step-badge">🔄 Deduplicating</span>
+                <span class="step-badge">📝 Summarizing</span>
+                <span class="step-badge">🔀 Cross-Verifying</span>
+                <span class="step-badge">⭐ Scoring</span>
+                <span class="step-badge">⚖️ Bias Check</span>
+                <span class="step-badge">🤖 AI Detection</span>
+                <span class="step-badge">⚖️ Verdict</span>
+            </div>
         </div>
 
-        <div class="result-section" id="results">
-            <div class="card">
-                <div class="stats">
-                    <div class="stat">
-                        <div class="stat-number" id="statFetched">0</div>
-                        <div class="stat-label">Articles Fetched</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-number" id="statDedup">0</div>
-                        <div class="stat-label">After Dedup</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-number" id="statSummaries">0</div>
-                        <div class="stat-label">Summarized</div>
+        <div class="results" id="results">
+            <!-- Verdict Banner -->
+            <div class="verdict-banner" id="verdictBanner">
+                <div class="verdict-icon" id="verdictIcon"></div>
+                <div class="verdict-text" id="verdictText">
+                    <h2 id="verdictLabel"></h2>
+                    <p id="verdictExplanation"></p>
+                    <div class="confidence-bar">
+                        <div class="confidence-label">Confidence: <span id="confidenceNum"></span>%</div>
+                        <div class="bar-track"><div class="bar-fill" id="confidenceBar" style="width:0%"></div></div>
                     </div>
                 </div>
+            </div>
 
-                <div class="tabs">
-                    <button class="tab active" onclick="switchTab('report')">📋 Report</button>
-                    <button class="tab" onclick="switchTab('articles')">📰 Articles</button>
+            <!-- Stats -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-number" id="statSources">0</div>
+                    <div class="stat-label">Sources Analyzed</div>
                 </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="statConfirmed">0</div>
+                    <div class="stat-label">Sources Confirming</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="statCredibility">0</div>
+                    <div class="stat-label">Avg Credibility Score</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="statConsistent">-</div>
+                    <div class="stat-label">Facts Consistent</div>
+                </div>
+            </div>
 
-                <div class="tab-content active" id="tab-report">
-                    <div class="report" id="report"></div>
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('report', this)">📋 Report</button>
+                <button class="tab" onclick="switchTab('articles', this)">📰 Articles</button>
+                <button class="tab" onclick="switchTab('credibility', this)">⭐ Credibility</button>
+                <button class="tab" onclick="switchTab('bias', this)">⚖️ Bias</button>
+                <button class="tab" onclick="switchTab('ai', this)">🤖 AI Detection</button>
+            </div>
+
+            <!-- Report Tab -->
+            <div class="tab-content active" id="tab-report">
+                <div class="card">
+                    <div class="report-box" id="reportText"></div>
+                    <div class="recommendation" id="recommendation">
+                        <strong>💡 Recommendation</strong>
+                        <span id="recommendationText"></span>
+                    </div>
                 </div>
-                <div class="tab-content" id="tab-articles">
-                    <div id="articlesList"></div>
-                </div>
+            </div>
+
+            <!-- Articles Tab -->
+            <div class="tab-content" id="tab-articles">
+                <div id="articlesList"></div>
+            </div>
+
+            <!-- Credibility Tab -->
+            <div class="tab-content" id="tab-credibility">
+                <div id="credibilityList"></div>
+            </div>
+
+            <!-- Bias Tab -->
+            <div class="tab-content" id="tab-bias">
+                <div id="biasList"></div>
+            </div>
+
+            <!-- AI Detection Tab -->
+            <div class="tab-content" id="tab-ai">
+                <div id="aiList"></div>
             </div>
         </div>
     </div>
 
     <script>
-        let selectedSources = [];
-
-        function toggleSource(el, source) {
-            if (el.classList.contains('selected')) {
-                el.classList.remove('selected');
-                selectedSources = selectedSources.filter(s => s !== source);
-            } else {
-                el.classList.add('selected');
-                selectedSources.push(source);
-            }
-        }
-
-        function switchTab(tab) {
+        function switchTab(tab, el) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.getElementById(`tab-${tab}`).classList.add('active');
-            event.target.classList.add('active');
+            el.classList.add('active');
         }
 
-        async function runResearch() {
-            const topic = document.getElementById('topic').value.trim();
-            if (!topic) return alert('Please enter a topic');
-            if (selectedSources.length === 0) return alert('Please select at least one source');
+        function getTierClass(tier) {
+            if (!tier) return 'unknown';
+            if (tier.includes('1')) return 'tier1';
+            if (tier.includes('2')) return 'tier2';
+            if (tier.includes('3')) return 'tier3';
+            return 'unknown';
+        }
+
+        function getScoreColor(score) {
+            if (score >= 70) return '#10b981';
+            if (score >= 40) return '#f59e0b';
+            return '#ef4444';
+        }
+
+        function getVerdictIcon(verdict) {
+            const icons = { REAL: '✅', FAKE: '❌', UNVERIFIED: '⚠️', MISLEADING: '🔄' };
+            return icons[verdict] || '❓';
+        }
+
+        async function verify() {
+            const query = document.getElementById('query').value.trim();
+            if (!query) return alert('Please enter a query to verify');
 
             document.getElementById('loader').style.display = 'block';
             document.getElementById('results').style.display = 'none';
-            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('verifyBtn').disabled = true;
 
             try {
-                const res = await fetch('/research', {
+                const res = await fetch('/verify', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ topic, sources: selectedSources })
+                    body: JSON.stringify({ query })
                 });
                 const data = await res.json();
+                console.log("Summaries count:", data.summaries.length);  // ← add this
+                console.log("Total fetched:", data);
+                // Verdict Banner
+                const verdict = data.verdict.verdict || 'UNVERIFIED';
+                const banner = document.getElementById('verdictBanner');
+                banner.className = `verdict-banner ${verdict}`;
+                document.getElementById('verdictIcon').textContent = getVerdictIcon(verdict);
+                const vt = document.getElementById('verdictText');
+                vt.className = `verdict-text ${verdict}`;
+                document.getElementById('verdictLabel').textContent = verdict;
+                document.getElementById('verdictExplanation').textContent = data.verdict.explanation || '';
+                document.getElementById('confidenceNum').textContent = data.verdict.confidence || 0;
+                document.getElementById('confidenceBar').style.width = `${data.verdict.confidence || 0}%`;
 
-                document.getElementById('statFetched').textContent = data.total_fetched;
-                document.getElementById('statDedup').textContent = data.after_dedup;
-                document.getElementById('statSummaries').textContent = data.summaries.length;
-                document.getElementById('report').textContent = data.report;
+                // Stats
+                document.getElementById('statSources').textContent = data.summaries.length;
+                document.getElementById('statConfirmed').textContent = data.cross_source_result.confirmed_by || 0;
+                document.getElementById('statCredibility').textContent = Math.round(data.verdict.avg_credibility || 0);
+                document.getElementById('statConsistent').textContent = data.cross_source_result.consistent || 'N/A';
 
-                const articlesList = document.getElementById('articlesList');
-                articlesList.innerHTML = data.summaries.map(s => `
-                    <div class="article-card">
-                        <div class="article-title">${s.title}</div>
-                        <div class="article-meta">
-                            <span class="badge ${s.relevance}">${s.relevance} Relevance</span>
+                // Report
+                document.getElementById('reportText').textContent = data.report;
+                document.getElementById('recommendationText').textContent = data.verdict.recommendation || '';
+
+                // Articles
+                document.getElementById('articlesList').innerHTML = data.summaries.map(s => `
+                    <div class="card">
+                        <div class="card-title">${s.title}</div>
+                        <div class="card-meta">
+                            <span class="badge ${getTierClass(s.tier)}">${s.tier || 'Unknown'}</span>
                             <span style="color:#64748b;font-size:0.8rem">${s.source}</span>
+                            ${s.authors?.length ? `<span style="color:#64748b;font-size:0.8rem">By ${s.authors.join(', ')}</span>` : ''}
                         </div>
-                        <div class="article-summary">${s.summary}</div>
-                        <div class="article-url"><a href="${s.url}" target="_blank">Read full article →</a></div>
+                        <div class="card-text">${s.summary}</div>
+                        <div class="card-link"><a href="${s.url}" target="_blank">Read full article →</a></div>
+                    </div>
+                `).join('');
+
+                // Credibility
+                document.getElementById('credibilityList').innerHTML = data.credibility_scores.map(s => `
+                    <div class="card">
+                        <div class="card-title">${s.title}</div>
+                        <div class="score-row">
+                            <div class="score-track"><div class="score-fill" style="width:${s.score}%;background:${getScoreColor(s.score)}"></div></div>
+                            <div class="score-num" style="color:${getScoreColor(s.score)}">${s.score}</div>
+                        </div>
+                        <div class="card-text" style="margin-top:8px">${s.reason}</div>
+                    </div>
+                `).join('');
+
+                // Bias
+                document.getElementById('biasList').innerHTML = data.bias_results.map(s => `
+                    <div class="card">
+                        <div class="card-title">${s.title}</div>
+                        <div class="card-meta">
+                            <span class="badge unknown">${s.bias}</span>
+                            <span class="badge unknown">${s.tone}</span>
+                        </div>
+                        <div class="card-text">Emotional words: ${s.emotional_words}</div>
+                    </div>
+                `).join('');
+
+                // AI Detection
+                document.getElementById('aiList').innerHTML = data.ai_detection_results.map(s => `
+                    <div class="card">
+                        <div class="card-title">${s.title}</div>
+                        <div class="card-meta">
+                            <span class="badge ${s.ai_probability === 'Low' ? 'real' : s.ai_probability === 'High' ? 'fake' : 'unverified'}">${s.verdict}</span>
+                            <span style="color:#64748b;font-size:0.8rem">AI Probability: ${s.ai_probability}</span>
+                        </div>
+                        <div class="card-text">Indicators: ${s.indicators}</div>
                     </div>
                 `).join('');
 
@@ -167,9 +315,14 @@
                 alert('Something went wrong: ' + err.message);
             } finally {
                 document.getElementById('loader').style.display = 'none';
-                document.getElementById('submitBtn').disabled = false;
+                document.getElementById('verifyBtn').disabled = false;
             }
         }
+
+        // Allow Enter key to trigger verify
+        document.getElementById('query').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') verify();
+        });
     </script>
 </body>
 </html>

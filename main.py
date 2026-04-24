@@ -1,53 +1,51 @@
-import os
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-from sources import NEWS_SOURCES
+from sources import ALL_URLS
 from graph import news_graph
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
 class QueryRequest(BaseModel):
-    topic: str
-    sources: list[str]  # List of selected source names e.g. ["BBC", "CNN"]
+    query: str
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="index.html",
-        context={"sources": list(NEWS_SOURCES.keys())}
+        context={}
     )
 
-@app.post("/research")
-async def research(query: QueryRequest):
-    # Collect URLs from selected sources
-    urls = []
-    for source in query.sources:
-        urls.extend(NEWS_SOURCES.get(source, []))
+@app.post("/verify")
+async def verify(query: QueryRequest):
+    if not query.query.strip():
+        return {"error": "Please enter a query"}
 
-    if not urls:
-        return {"error": "No valid sources selected"}
-
-    # Run the LangGraph pipeline
     result = news_graph.invoke({
-        "urls": urls,
+        "query": query.query,
+        "urls": ALL_URLS,
         "raw_articles": [],
         "deduplicated_articles": [],
         "summaries": [],
+        "cross_source_result": {},
+        "credibility_scores": [],
+        "bias_results": [],
+        "ai_detection_results": [],
+        "verdict": {},
         "final_report": "",
-        "topic": query.topic,
     })
 
     return {
+        "verdict": result["verdict"],
         "report": result["final_report"],
         "summaries": result["summaries"],
+        "credibility_scores": result["credibility_scores"],
+        "bias_results": result["bias_results"],
+        "ai_detection_results": result["ai_detection_results"],
+        "cross_source_result": result["cross_source_result"],
         "total_fetched": len(result["raw_articles"]),
         "after_dedup": len(result["deduplicated_articles"]),
     }
-
-@app.get("/sources")
-async def get_sources():
-    return {"sources": list(NEWS_SOURCES.keys())}
