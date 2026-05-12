@@ -21,3 +21,5 @@ User Query
 [Present Agent]        → Structured report with verdict
 
 ![Truthlens](https://github.com/aniketd2909/TruthLens/blob/main/Truthlens.png?raw=true)
+
+![FakeNews](https://github.com/aniketd2909/TruthLens/blob/main/Truthlens-1.png?raw=true)
