@@ -19,3 +19,5 @@ User Query
 [Verdict Agent]        → Final: Real / Fake / Unverified + explanation
      ↓
 [Present Agent]        → Structured report with verdict
+
+![Truthlens](https://github.com/aniketd2909/TruthLens/blob/main/Truthlens.png?raw=true)
